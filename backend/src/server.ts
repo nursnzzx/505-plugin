@@ -11,7 +11,7 @@ async function bootstrap(): Promise<void> {
 
   const app = createApp();
   const server = app.listen(env.PORT, () => {
-    logger.info(`🚀 KantTools API listening on http://localhost:${env.PORT}${env.API_PREFIX}`);
+    logger.info(`🚀 Nurse 505 Plugin API listening on http://localhost:${env.PORT}${env.API_PREFIX}`);
   });
 
   startJobs();

@@ -45,8 +45,8 @@ async function main() {
 
   // ── Plugin versions ──
   const versions = [
-    { slug: 'ae', name: 'KantTools for After Effects', version: '1.0.0' },
-    { slug: 'premiere', name: 'KantTools for Premiere Pro', version: '1.0.0' },
+    { slug: 'ae', name: 'Nurse 505 Plugin for After Effects', version: '1.0.0' },
+    { slug: 'premiere', name: 'Nurse 505 Plugin for Premiere Pro', version: '1.0.0' },
   ];
   for (const v of versions) {
     await prisma.pluginVersion.upsert({
@@ -72,7 +72,7 @@ async function main() {
   if (count === 0) {
     await prisma.announcement.createMany({
       data: [
-        { title: 'Welcome to KantTools 🎉', body: 'Your licensing portal is live. Activate a key to get started.', kind: 'NEWS', isPinned: true },
+        { title: 'Welcome to Nurse 505 Plugin 🎉', body: 'Your licensing portal is live. Activate a key to get started.', kind: 'NEWS', isPinned: true },
         { title: 'v1.0.0 released', body: 'After Effects and Premiere Pro plugins are now available.', kind: 'UPDATE' },
         { title: 'Changelog', body: '- Initial release\n- License activation\n- Device binding', kind: 'CHANGELOG' },
       ],

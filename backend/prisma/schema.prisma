@@ -1,4 +1,4 @@
-// KantTools — Prisma schema
+// Nurse 505 Plugin — Prisma schema
 // Complete licensing ecosystem data model.
 
 generator client {

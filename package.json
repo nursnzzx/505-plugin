@@ -2,7 +2,7 @@
   "name": "kanttools",
   "version": "1.0.0",
   "private": true,
-  "description": "KantTools — licensing ecosystem for desktop plugins with Telegram integration",
+  "description": "Nurse 505 Plugin — licensing ecosystem for desktop plugins with Telegram integration",
   "workspaces": [
     "backend",
     "web",

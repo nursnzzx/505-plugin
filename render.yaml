@@ -1,4 +1,4 @@
-# Render Blueprint — deploys the KantTools backend (API + Telegram bot via webhook)
+# Render Blueprint — deploys the Nurse 505 Plugin backend (API + Telegram bot via webhook)
 # as a single FREE web service. The bot runs in-process (ENABLE_BOT_WEBHOOK),
 # so no separate worker is needed.
 #

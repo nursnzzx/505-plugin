@@ -19,7 +19,7 @@ const schema = z.object({
   LICENSE_SIGNING_SECRET: z.string().min(16),
 
   TELEGRAM_BOT_TOKEN: z.string().default(''),
-  TELEGRAM_BOT_USERNAME: z.string().default('KantToolsBot'),
+  TELEGRAM_BOT_USERNAME: z.string().default('Nurse505Bot'),
   TELEGRAM_WEBAPP_URL: z.string().default('http://localhost:3000'),
   TELEGRAM_ADMIN_IDS: z.string().default(''),
 

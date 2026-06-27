@@ -2,7 +2,7 @@
   "name": "@kanttools/backend",
   "version": "1.0.0",
   "private": true,
-  "description": "KantTools backend — REST API, license engine, Telegram auth, admin",
+  "description": "Nurse 505 Plugin backend — REST API, license engine, Telegram auth, admin",
   "main": "dist/server.js",
   "scripts": {
     "dev": "tsx watch src/server.ts",

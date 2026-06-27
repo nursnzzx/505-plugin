@@ -1,8 +1,8 @@
-# KantTools
+# Nurse 505 Plugin
 
 A complete licensing ecosystem for desktop plugins (Adobe After Effects, Premiere Pro, …) with deep Telegram integration.
 
-KantTools is a monorepo with four parts that share **one backend**:
+Nurse 505 Plugin is a monorepo with four parts that share **one backend**:
 
 | Part | Stack | Path |
 |------|-------|------|

@@ -1,4 +1,4 @@
-# KantTools Backend
+# Nurse 505 Plugin Backend
 
 Node.js + TypeScript + Express + Prisma + PostgreSQL.
 
