@@ -2,7 +2,25 @@
 
 import type { ApiEnvelope } from './types';
 
-const BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
+// Resolve the backend base URL.
+//   • Local dev:           http://localhost:4000/api/v1            (full URL)
+//   • Render production:   nurse505-api.onrender.com               (bare host from fromService)
+// We normalize both to "https://<host>/api/v1" so the rest of the code can just fetch.
+function resolveBase(raw: string | undefined): string {
+  const v = (raw ?? 'http://localhost:4000/api/v1').trim();
+  const withScheme = /^https?:\/\//i.test(v) ? v : `https://${v}`;
+  const noTrailing = withScheme.replace(/\/+$/, '');
+  // If the URL has no path yet (Render gave us only the host), append the API prefix.
+  try {
+    const u = new URL(noTrailing);
+    if (u.pathname === '' || u.pathname === '/') return `${noTrailing}/api/v1`;
+  } catch {
+    /* fall through */
+  }
+  return noTrailing;
+}
+
+const BASE = resolveBase(process.env.NEXT_PUBLIC_API_URL);
 const TOKEN_KEY = 'kt_access_token';
 
 export function getToken(): string | null {

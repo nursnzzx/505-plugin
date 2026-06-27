@@ -52,13 +52,28 @@ if (!parsed.success) {
 
 const raw = parsed.data;
 
+// Normalize a URL-ish env value into a fully-qualified URL (https + no trailing slash).
+// Render's `fromService.property: host` gives bare hosts like "foo.onrender.com" —
+// Telegram and our API client both need a scheme, so we add one if missing.
+function toUrl(value: string, fallback = ''): string {
+  const v = (value || '').trim();
+  if (!v) return fallback;
+  const withScheme = /^https?:\/\//i.test(v) ? v : `https://${v}`;
+  return withScheme.replace(/\/+$/, '');
+}
+
 export const env = {
   ...raw,
   isProd: raw.NODE_ENV === 'production',
   isDev: raw.NODE_ENV === 'development',
   // Render injects RENDER_EXTERNAL_URL automatically; use it when PUBLIC_URL is unset.
-  publicUrl: raw.PUBLIC_URL || process.env.RENDER_EXTERNAL_URL || '',
-  corsOrigins: raw.CORS_ORIGINS.split(',').map((s) => s.trim()).filter(Boolean),
+  publicUrl: toUrl(raw.PUBLIC_URL || process.env.RENDER_EXTERNAL_URL || ''),
+  // Telegram requires HTTPS; auto-add scheme if Render passed only the host.
+  TELEGRAM_WEBAPP_URL: toUrl(raw.TELEGRAM_WEBAPP_URL, 'http://localhost:3000'),
+  corsOrigins: raw.CORS_ORIGINS.split(',')
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .map((s) => toUrl(s, s)),
   telegramAdminIds: raw.TELEGRAM_ADMIN_IDS.split(',')
     .map((s) => s.trim())
     .filter(Boolean)
