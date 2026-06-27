@@ -1,0 +1,569 @@
+// KantTools — Prisma schema
+// Complete licensing ecosystem data model.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ──────────────────────────────────────────────
+// ENUMS
+// ──────────────────────────────────────────────
+
+enum LicenseTier {
+  FREE
+  TRIAL
+  PRO
+  ULTIMATE
+}
+
+enum LicenseStatus {
+  ACTIVE
+  EXPIRED
+  SUSPENDED
+  REVOKED
+  TRIAL
+  PENDING
+  BLOCKED
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  PAST_DUE
+  CANCELED
+  EXPIRED
+  TRIALING
+}
+
+enum PaymentProvider {
+  TELEGRAM_STARS
+  STRIPE
+  CRYPTO
+  MANUAL
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+  CANCELED
+}
+
+enum PromoType {
+  PERCENT
+  FIXED
+  EXTEND_DAYS
+}
+
+enum NotificationType {
+  LICENSE_EXPIRING
+  LICENSE_EXPIRED
+  NEW_VERSION
+  ANNOUNCEMENT
+  PAYMENT
+  SUPPORT
+  SYSTEM
+}
+
+enum NotificationChannel {
+  TELEGRAM
+  EMAIL
+  IN_APP
+  PLUGIN
+}
+
+enum AnnouncementKind {
+  NEWS
+  UPDATE
+  CHANGELOG
+  MAINTENANCE
+}
+
+enum DevicePlatform {
+  WINDOWS
+  MACOS
+  LINUX
+  UNKNOWN
+}
+
+enum AdminRole {
+  SUPER_ADMIN
+  ADMIN
+  SUPPORT
+  READONLY
+}
+
+enum ActivityType {
+  LOGIN
+  LOGOUT
+  ACTIVATE
+  DEACTIVATE
+  VERIFY
+  RENEW
+  HEARTBEAT
+  DEVICE_ADDED
+  DEVICE_REMOVED
+  DOWNLOAD
+  CRASH
+  PAYMENT
+}
+
+// ──────────────────────────────────────────────
+// USERS
+// ──────────────────────────────────────────────
+
+model User {
+  id            String   @id @default(cuid())
+  telegramId    BigInt   @unique
+  username      String?
+  firstName     String?
+  lastName      String?
+  avatarUrl     String?
+  languageCode  String?  @default("en")
+  country       String?
+  city          String?
+  timezone      String?
+  email         String?  @unique
+  isBanned      Boolean  @default(false)
+  lastSeenAt    DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  licenses          License[]
+  devices           Device[]
+  subscriptions     Subscription[]
+  payments          Payment[]
+  activities        Activity[]
+  notifications     Notification[]
+  sessions          Session[]
+  pluginDownloads   PluginDownload[]
+  referralsMade     Referral[]    @relation("Referrer")
+  referralReceived  Referral?     @relation("Referred")
+  promoRedemptions  PromoRedemption[]
+
+  @@index([username])
+  @@index([createdAt])
+  @@map("users")
+}
+
+// ──────────────────────────────────────────────
+// LICENSE PLANS
+// ──────────────────────────────────────────────
+
+model LicensePlan {
+  id            String      @id @default(cuid())
+  code          String      @unique // e.g. "pro_monthly"
+  name          String
+  tier          LicenseTier
+  description   String?
+  priceCents    Int         @default(0)
+  currency      String      @default("USD")
+  durationDays  Int         @default(30) // 0 = lifetime
+  maxDevices    Int         @default(1)
+  features      Json        @default("[]")
+  isActive      Boolean     @default(true)
+  sortOrder     Int         @default(0)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  licenses      License[]
+  subscriptions Subscription[]
+
+  @@index([tier])
+  @@index([isActive])
+  @@map("license_plans")
+}
+
+// ──────────────────────────────────────────────
+// LICENSES
+// ──────────────────────────────────────────────
+
+model License {
+  id              String        @id @default(cuid())
+  key             String        @unique
+  tier            LicenseTier   @default(FREE)
+  status          LicenseStatus @default(PENDING)
+  signature       String        // HMAC of key payload for offline verification
+
+  userId          String?
+  user            User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  planId          String?
+  plan            LicensePlan?  @relation(fields: [planId], references: [id], onDelete: SetNull)
+
+  maxDevices      Int           @default(1)
+  activationCount Int           @default(0)
+  deviceChanges   Int           @default(0)
+  pluginVersion   String?
+  lastOnlineAt    DateTime?
+  activatedAt     DateTime?
+  issuedAt        DateTime      @default(now())
+  expiresAt       DateTime?
+  notes           String?
+
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  devices         Device[]
+  history         LicenseHistory[]
+  activities      Activity[]
+  payments        Payment[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([tier])
+  @@index([expiresAt])
+  @@map("licenses")
+}
+
+model LicenseHistory {
+  id          String   @id @default(cuid())
+  licenseId   String
+  license     License  @relation(fields: [licenseId], references: [id], onDelete: Cascade)
+  action      String   // CREATED, ACTIVATED, RENEWED, SUSPENDED, REVOKED, TIER_CHANGED ...
+  fromStatus  LicenseStatus?
+  toStatus    LicenseStatus?
+  meta        Json?
+  actorType   String?  // USER | ADMIN | SYSTEM
+  actorId     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([licenseId])
+  @@index([action])
+  @@map("license_history")
+}
+
+// ──────────────────────────────────────────────
+// DEVICES
+// ──────────────────────────────────────────────
+
+model Device {
+  id            String         @id @default(cuid())
+  licenseId     String
+  license       License        @relation(fields: [licenseId], references: [id], onDelete: Cascade)
+  userId        String?
+  user          User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  hardwareId    String
+  platform      DevicePlatform @default(UNKNOWN)
+  os            String?
+  cpu           String?
+  motherboardId String?
+  diskId        String?
+  machineName   String?
+  pluginVersion String?
+  ip            String?
+  country       String?
+  city          String?
+  timezone      String?
+  isActive      Boolean        @default(true)
+  lastSeenAt    DateTime?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  @@unique([licenseId, hardwareId])
+  @@index([hardwareId])
+  @@index([userId])
+  @@index([isActive])
+  @@map("devices")
+}
+
+// ──────────────────────────────────────────────
+// ACTIVITY
+// ──────────────────────────────────────────────
+
+model Activity {
+  id          String       @id @default(cuid())
+  userId      String?
+  user        User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
+  licenseId   String?
+  license     License?     @relation(fields: [licenseId], references: [id], onDelete: SetNull)
+  type        ActivityType
+  message     String?
+  meta        Json?
+  ip          String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@index([userId])
+  @@index([licenseId])
+  @@index([type])
+  @@index([createdAt])
+  @@map("activity")
+}
+
+// ──────────────────────────────────────────────
+// SUBSCRIPTIONS
+// ──────────────────────────────────────────────
+
+model Subscription {
+  id                 String             @id @default(cuid())
+  userId             String
+  user               User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  planId             String
+  plan               LicensePlan        @relation(fields: [planId], references: [id], onDelete: Restrict)
+  status             SubscriptionStatus @default(ACTIVE)
+  provider           PaymentProvider    @default(MANUAL)
+  externalId         String?
+  currentPeriodStart DateTime           @default(now())
+  currentPeriodEnd   DateTime
+  cancelAtPeriodEnd  Boolean            @default(false)
+  canceledAt         DateTime?
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  payments           Payment[]
+
+  @@index([userId])
+  @@index([status])
+  @@map("subscriptions")
+}
+
+// ──────────────────────────────────────────────
+// PAYMENTS
+// ──────────────────────────────────────────────
+
+model Payment {
+  id             String          @id @default(cuid())
+  userId         String
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subscriptionId String?
+  subscription   Subscription?   @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+  licenseId      String?
+  license        License?        @relation(fields: [licenseId], references: [id], onDelete: SetNull)
+
+  provider       PaymentProvider
+  status         PaymentStatus   @default(PENDING)
+  amountCents    Int
+  currency       String          @default("USD")
+  externalId     String?         @unique
+  invoiceUrl     String?
+  description    String?
+  meta           Json?
+  paidAt         DateTime?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([provider])
+  @@map("payments")
+}
+
+// ──────────────────────────────────────────────
+// PROMO CODES
+// ──────────────────────────────────────────────
+
+model PromoCode {
+  id            String    @id @default(cuid())
+  code          String    @unique
+  type          PromoType
+  value         Int       // percent (0-100), fixed cents, or days
+  maxRedemptions Int      @default(0) // 0 = unlimited
+  redemptions   Int       @default(0)
+  validFrom     DateTime  @default(now())
+  validUntil    DateTime?
+  isActive      Boolean   @default(true)
+  appliesToTier LicenseTier?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  redemptionLogs PromoRedemption[]
+
+  @@index([code])
+  @@index([isActive])
+  @@map("promo_codes")
+}
+
+model PromoRedemption {
+  id          String    @id @default(cuid())
+  promoId     String
+  promo       PromoCode @relation(fields: [promoId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([promoId, userId])
+  @@index([userId])
+  @@map("promo_redemptions")
+}
+
+// ──────────────────────────────────────────────
+// REFERRALS
+// ──────────────────────────────────────────────
+
+model Referral {
+  id           String   @id @default(cuid())
+  referrerId   String
+  referrer     User     @relation("Referrer", fields: [referrerId], references: [id], onDelete: Cascade)
+  referredId   String   @unique
+  referred     User     @relation("Referred", fields: [referredId], references: [id], onDelete: Cascade)
+  code         String
+  rewardGranted Boolean @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([referrerId])
+  @@index([code])
+  @@map("referrals")
+}
+
+// ──────────────────────────────────────────────
+// ANNOUNCEMENTS
+// ──────────────────────────────────────────────
+
+model Announcement {
+  id          String           @id @default(cuid())
+  title       String
+  body        String
+  kind        AnnouncementKind @default(NEWS)
+  isPinned    Boolean          @default(false)
+  isPublished Boolean          @default(true)
+  coverUrl    String?
+  publishedAt DateTime         @default(now())
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@index([isPublished])
+  @@index([isPinned])
+  @@index([publishedAt])
+  @@map("announcements")
+}
+
+// ──────────────────────────────────────────────
+// NOTIFICATIONS
+// ──────────────────────────────────────────────
+
+model Notification {
+  id          String              @id @default(cuid())
+  userId      String
+  user        User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type        NotificationType
+  channel     NotificationChannel @default(IN_APP)
+  title       String
+  body        String
+  meta        Json?
+  isRead      Boolean             @default(false)
+  sentAt      DateTime?
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+
+  @@index([userId])
+  @@index([isRead])
+  @@index([type])
+  @@map("notifications")
+}
+
+// ──────────────────────────────────────────────
+// PLUGIN VERSIONS & DOWNLOADS
+// ──────────────────────────────────────────────
+
+model PluginVersion {
+  id              String   @id @default(cuid())
+  slug            String   // "ae" | "premiere"
+  name            String
+  version         String
+  channel         String   @default("stable") // stable | beta
+  releaseNotes    String?
+  downloadUrl     String
+  fileSizeBytes   Int      @default(0)
+  checksum        String?
+  minHostVersion  String?
+  systemRequirements Json?
+  isLatest        Boolean  @default(false)
+  isMandatory     Boolean  @default(false)
+  publishedAt     DateTime @default(now())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  downloads       PluginDownload[]
+
+  @@unique([slug, version, channel])
+  @@index([slug])
+  @@index([isLatest])
+  @@map("plugin_versions")
+}
+
+model PluginDownload {
+  id          String        @id @default(cuid())
+  versionId   String
+  version     PluginVersion @relation(fields: [versionId], references: [id], onDelete: Cascade)
+  userId      String?
+  user        User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  ip          String?
+  country     String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([versionId])
+  @@index([userId])
+  @@map("plugin_downloads")
+}
+
+// ──────────────────────────────────────────────
+// ADMINS, SESSIONS, AUDIT LOGS
+// ──────────────────────────────────────────────
+
+model Admin {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  passwordHash String
+  name         String?
+  role         AdminRole @default(ADMIN)
+  isActive     Boolean   @default(true)
+  lastLoginAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  auditLogs    AuditLog[]
+  sessions     Session[]
+
+  @@index([role])
+  @@map("admins")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  userId       String?
+  user         User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  adminId      String?
+  admin        Admin?   @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  refreshToken String   @unique
+  userAgent    String?
+  ip           String?
+  expiresAt    DateTime
+  revokedAt    DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([userId])
+  @@index([adminId])
+  @@index([refreshToken])
+  @@map("sessions")
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  adminId     String?
+  admin       Admin?   @relation(fields: [adminId], references: [id], onDelete: SetNull)
+  action      String
+  entity      String?
+  entityId    String?
+  before      Json?
+  after       Json?
+  ip          String?
+  userAgent   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([adminId])
+  @@index([entity])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
