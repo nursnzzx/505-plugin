@@ -56,7 +56,7 @@ export default function AdminDashboard() {
       <header className="mb-7 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-white">Dashboard</h1>
-          <p className="text-sm text-muted">KantTools control panel</p>
+          <p className="text-sm text-muted">Nurse 505 control panel</p>
         </div>
       </header>
 

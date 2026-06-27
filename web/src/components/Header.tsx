@@ -39,7 +39,7 @@ export function Header({ user, license }: { user: User | null; license: License 
       <div className="min-w-0 flex-1">
         <p className="truncate text-base font-semibold text-white">{user?.fullName ?? 'Welcome'}</p>
         <p className="truncate text-xs text-muted">
-          {user?.username ? `@${user.username}` : 'KantTools member'}
+          {user?.username ? `@${user.username}` : 'Nurse 505 member'}
         </p>
       </div>
 

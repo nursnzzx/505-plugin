@@ -4,8 +4,8 @@ import './globals.css';
 import { Providers } from '@/components/Providers';
 
 export const metadata: Metadata = {
-  title: 'KantTools',
-  description: 'Licensing portal for KantTools desktop plugins',
+  title: 'Nurse 505',
+  description: 'Licensing portal for Nurse 505 desktop plugins',
 };
 
 export const viewport: Viewport = {

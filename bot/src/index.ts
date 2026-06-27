@@ -10,7 +10,7 @@ const bot = new Telegraf(config.botToken);
 const awaitingKey = new Set<number>();
 
 const WELCOME = (name: string) =>
-  `👋 <b>Welcome to KantTools, ${name}!</b>\n\n` +
+  `👋 <b>Welcome to Nurse 505, ${name}!</b>\n\n` +
   `Your licensing hub for After Effects & Premiere Pro plugins.\n\n` +
   `• Manage your license\n• Download plugins\n• Track devices & usage\n\n` +
   `Tap below to open your personal cabinet.`;
@@ -22,7 +22,7 @@ bot.start(async (ctx) => {
 
 bot.help((ctx) =>
   ctx.replyWithHTML(
-    `<b>KantTools commands</b>\n\n` +
+    `<b>Nurse 505 commands</b>\n\n` +
       `/start — main menu\n` +
       `/profile — your account\n` +
       `/license — license status\n` +
@@ -64,7 +64,7 @@ bot.on(message('text'), async (ctx) => {
   const text = ctx.message.text.trim();
   if (!awaitingKey.has(ctx.from.id)) return;
   if (!/^KT-/i.test(text)) {
-    await ctx.reply('That does not look like a KantTools key. It should start with "KT-".');
+    await ctx.reply('That does not look like a Nurse 505 key. It should start with "KT-".');
     return;
   }
   awaitingKey.delete(ctx.from.id);
@@ -95,7 +95,7 @@ async function launch() {
   ]);
   await bot.launch();
   // eslint-disable-next-line no-console
-  console.log('🤖 KantTools bot is running');
+  console.log('🤖 Nurse 505 bot is running');
 }
 
 void launch();

@@ -35,7 +35,7 @@ function buildBot(): Telegraf {
   b.start(async (ctx) => {
     awaitingKey.delete(ctx.from.id);
     await ctx.replyWithHTML(
-      `👋 <b>Welcome to KantTools, ${ctx.from.first_name ?? 'there'}!</b>\n\n` +
+      `👋 <b>Welcome to Nurse 505, ${ctx.from.first_name ?? 'there'}!</b>\n\n` +
         `Your licensing hub for After Effects & Premiere Pro plugins.\n\n` +
         `• Manage your license\n• Download plugins\n• Track devices & usage\n\n` +
         `Tap below to open your personal cabinet.`,
@@ -45,7 +45,7 @@ function buildBot(): Telegraf {
 
   b.help((ctx) =>
     ctx.replyWithHTML(
-      `<b>KantTools commands</b>\n\n/start — main menu\n/profile — your account\n/license — license status\n/promo — redeem a promo code\n/support — contact support\n/help — this message`,
+      `<b>Nurse 505 commands</b>\n\n/start — main menu\n/profile — your account\n/license — license status\n/promo — redeem a promo code\n/support — contact support\n/help — this message`,
       mainMenu(),
     ),
   );
@@ -78,7 +78,7 @@ function buildBot(): Telegraf {
     const text = ctx.message.text.trim();
     if (!awaitingKey.has(ctx.from.id)) return;
     if (!/^KT-/i.test(text)) {
-      await ctx.reply('That does not look like a KantTools key. It should start with "KT-".');
+      await ctx.reply('That does not look like a Nurse 505 key. It should start with "KT-".');
       return;
     }
     awaitingKey.delete(ctx.from.id);

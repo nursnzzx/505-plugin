@@ -80,7 +80,7 @@ function ActivatePrompt({ onActivated }: { onActivated: () => Promise<void> }) {
           <KeyRound className="text-accent" />
         </div>
         <h2 className="mt-4 text-lg font-semibold text-white">Activate your license</h2>
-        <p className="mt-1 text-sm text-muted">Enter a key to unlock your KantTools plan.</p>
+        <p className="mt-1 text-sm text-muted">Enter a key to unlock your Nurse 505 plan.</p>
       </div>
       <input
         value={key}

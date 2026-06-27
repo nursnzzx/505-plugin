@@ -38,7 +38,7 @@ export default function AdminLogin() {
           <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-accent/12">
             <Lock className="text-accent" />
           </div>
-          <h1 className="mt-4 text-xl font-bold text-white">KantTools Admin</h1>
+          <h1 className="mt-4 text-xl font-bold text-white">Nurse 505 Admin</h1>
           <p className="text-sm text-muted">Sign in to the control panel</p>
         </div>
         <input
